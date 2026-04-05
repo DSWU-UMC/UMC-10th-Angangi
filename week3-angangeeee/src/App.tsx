@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { Navbar } from "./components/common/Navbar";
 import { Home } from "./pages/Home";
+import { MovieDetailPage } from "./pages/MovieDetailPage";
 import { MoviePage } from "./pages/MoviePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
@@ -11,6 +12,14 @@ const Layout = () => {
       <main className="px-6 py-8">
         <Outlet />
       </main>
+    </div>
+  );
+};
+
+const DetailLayout = () => {
+  return (
+    <div className="min-h-screen bg-black">
+      <Outlet />
     </div>
   );
 };
@@ -27,6 +36,14 @@ const router = createBrowserRouter([
       { path: "top-rated", element: <MoviePage /> },
       { path: "upcoming", element: <MoviePage /> },
     ],
+  },
+
+  {
+    path: "/",
+    element: <DetailLayout />,
+    errorElement: <NotFoundPage />,
+
+    children: [{ path: "movie/:movieId", element: <MovieDetailPage /> }],
   },
 ]);
 

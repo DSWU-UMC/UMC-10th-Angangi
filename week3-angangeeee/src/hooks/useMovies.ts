@@ -39,7 +39,7 @@ export const useMovies = (
 
         const data: MoviesResponse = await response.json();
 
-        console.log("영화 데이터:", data);
+        console.log("영화 목록 데이터:", data);
 
         setMovies(data.results);
         setTotalPages(Math.min(data.total_pages, 500));
