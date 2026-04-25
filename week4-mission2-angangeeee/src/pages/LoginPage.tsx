@@ -11,7 +11,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ✅ 유효성 검사
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 6;
 
@@ -20,14 +19,11 @@ export default function LoginPage() {
 
   const isFormValid = isEmailValid && isPasswordValid;
 
-  // ✅ 로그인 처리 (핵심)
   const handleLogin = () => {
     if (!isFormValid) return;
 
-    // 👉 실제 API 연결 전 임시 토큰 저장
     localStorage.setItem("accessToken", "test-token");
 
-    // 👉 홈으로 이동
     navigate("/home");
   };
 
@@ -65,7 +61,6 @@ export default function LoginPage() {
             <S.Line />
           </S.Divider>
 
-          {/* 이메일 */}
           <S.FieldGroup>
             <S.Input
               placeholder="이메일을 입력해주세요!"
@@ -78,7 +73,6 @@ export default function LoginPage() {
             )}
           </S.FieldGroup>
 
-          {/* 비밀번호 */}
           <S.FieldGroup>
             <S.Input
               type="password"
@@ -94,7 +88,6 @@ export default function LoginPage() {
             )}
           </S.FieldGroup>
 
-          {/* 로그인 버튼 */}
           <S.SubmitButton
             type="button"
             disabled={!isFormValid}
