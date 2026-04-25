@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import * as S from "./Login.style";
 
 import backButton from "../assets/arrow_back.svg";
 import googleLogo from "../assets/image.png";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -23,7 +26,9 @@ export default function LoginPage() {
 
         <S.Nav>
           <S.NavButton variant="login">로그인</S.NavButton>
-          <S.NavButton variant="signup">회원가입</S.NavButton>
+          <S.NavButton variant="signup" onClick={() => navigate("/signup")}>
+            회원가입
+          </S.NavButton>
         </S.Nav>
       </S.Header>
 
