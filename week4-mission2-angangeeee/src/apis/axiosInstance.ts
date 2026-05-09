@@ -2,20 +2,19 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const BASE_URL = "http://localhost:8000";
 
+interface TokenRefreshResponse {
+  accessToken: string;
+}
+
 interface RetryRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-interface RefreshTokenResponse {
-  accessToken: string;
-}
-
-export const api = axios.create({
+export const axiosInstance = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
+axiosInstance.interceptors.request.use((config) => {
   const accessToken = localStorage.getItem("accessToken");
 
   if (accessToken) {
@@ -25,7 +24,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
 
   async (error: AxiosError) => {
@@ -41,20 +40,20 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refreshToken");
 
-        const response = await axios.post<RefreshTokenResponse>(
+        const refreshResponse = await axios.post<TokenRefreshResponse>(
           `${BASE_URL}/v1/auth/refresh`,
           {
             refreshToken,
           },
         );
 
-        const newAccessToken = response.data.accessToken;
+        const newAccessToken = refreshResponse.data.accessToken;
 
         localStorage.setItem("accessToken", newAccessToken);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-        return api(originalRequest);
+        return axiosInstance(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -68,17 +67,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-export const login = (email: string, password: string) => {
-  return api.post("/v1/auth/signin", {
-    email,
-    password,
-  });
-};
-
-export const signup = (email: string, password: string) => {
-  return api.post("/v1/auth/signup", {
-    email,
-    password,
-  });
-};

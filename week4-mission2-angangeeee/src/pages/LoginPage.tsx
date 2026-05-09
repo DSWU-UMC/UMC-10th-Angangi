@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import * as S from "./Login.style";
 
+import { login } from "../apis/auth";
+
 import backButton from "../assets/arrow_back.svg";
 import googleLogo from "../assets/image.png";
 
@@ -19,14 +21,37 @@ export default function LoginPage() {
 
   const isFormValid = isEmailValid && isPasswordValid;
 
+  const handleLogin = async () => {
+    if (!isFormValid) return;
+
+    try {
+      const res = await login(email, password);
+
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
+
+      navigate("/home");
+    } catch (error) {
+      console.error(error);
+      alert("로그인에 실패했습니다.");
+    }
+  };
+
   return (
     <S.Page>
       <S.Header>
         <S.Logo>돌려돌려LP판</S.Logo>
 
         <S.Nav>
-          <S.NavButton variant="login">로그인</S.NavButton>
-          <S.NavButton variant="signup" onClick={() => navigate("/signup")}>
+          <S.NavButton type="button" variant="login">
+            로그인
+          </S.NavButton>
+
+          <S.NavButton
+            type="button"
+            variant="signup"
+            onClick={() => navigate("/signup")}
+          >
             회원가입
           </S.NavButton>
         </S.Nav>
@@ -35,13 +60,13 @@ export default function LoginPage() {
       <S.Main>
         <S.LoginBox>
           <S.TitleRow>
-            <S.BackButton>
+            <S.BackButton type="button">
               <img src={backButton} alt="뒤로가기" />
             </S.BackButton>
             <S.Title>로그인</S.Title>
           </S.TitleRow>
 
-          <S.GoogleButton>
+          <S.GoogleButton type="button">
             <S.GoogleIcon src={googleLogo} alt="Google Logo" />
             <p>구글 로그인</p>
           </S.GoogleButton>
@@ -54,6 +79,7 @@ export default function LoginPage() {
 
           <S.FieldGroup>
             <S.Input
+              type="email"
               placeholder="이메일을 입력해주세요!"
               value={email}
               $hasError={showEmailError}
@@ -79,7 +105,13 @@ export default function LoginPage() {
             )}
           </S.FieldGroup>
 
-          <S.SubmitButton disabled={!isFormValid}>로그인</S.SubmitButton>
+          <S.SubmitButton
+            type="button"
+            disabled={!isFormValid}
+            onClick={handleLogin}
+          >
+            로그인
+          </S.SubmitButton>
         </S.LoginBox>
       </S.Main>
     </S.Page>
