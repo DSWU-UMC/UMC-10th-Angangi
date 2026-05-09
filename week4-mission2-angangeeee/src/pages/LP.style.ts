@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 export const Wrapper = styled.div`
   display: flex;
@@ -255,4 +255,184 @@ export const FloatingButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+export const CommentSection = styled.section`
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+`;
+
+export const CommentHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+`;
+
+export const CommentTitle = styled.h2`
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+`;
+
+export const CommentSortArea = styled.div`
+  display: flex;
+`;
+
+export const CommentSortButton = styled.button<{ $isActive: boolean }>`
+  padding: 8px 14px;
+  border: 1px solid white;
+
+  background-color: ${({ $isActive }) => ($isActive ? "white" : "transparent")};
+
+  color: ${({ $isActive }) => ($isActive ? "black" : "white")};
+
+  font-size: 13px;
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+  &:first-child {
+    border-radius: 6px 0 0 6px;
+  }
+
+  &:last-child {
+    border-radius: 0 6px 6px 0;
+  }
+`;
+
+export const CommentForm = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
+`;
+
+export const CommentInput = styled.input`
+  height: 48px;
+  width: 100%;
+  padding: 0 16px;
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+
+  background-color: #1f2228;
+  color: white;
+
+  font-size: 14px;
+
+  outline: none;
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+
+  &:focus {
+    border-color: #ff2ea6;
+  }
+`;
+
+export const CommentSubmitButton = styled.button`
+  min-width: 90px;
+  height: 48px;
+
+  border: none;
+  border-radius: 8px;
+
+  background-color: #ff2ea6;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+export const CommentHelpText = styled.p`
+  margin: 0 0 24px;
+
+  color: #b8b8b8;
+  font-size: 13px;
+`;
+
+export const CommentList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+export const CommentItem = styled.article`
+  padding: 18px;
+
+  border-radius: 10px;
+  background-color: #1f2228;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+`;
+
+export const CommentMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+`;
+
+export const CommentAuthor = styled.span`
+  font-size: 14px;
+  font-weight: 700;
+`;
+
+export const CommentDate = styled.span`
+  color: #9ca3af;
+  font-size: 12px;
+`;
+
+export const CommentContent = styled.p`
+  margin: 0;
+
+  color: #f3f4f6;
+  font-size: 14px;
+  line-height: 1.6;
+
+  word-break: break-word;
+`;
+
+export const shimmer = keyframes`
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
+`;
+
+export const CommentSkeleton = styled.div`
+  width: 100%;
+  height: 96px;
+
+  border-radius: 10px;
+
+  background: linear-gradient(90deg, #2f3238 25%, #3a3f46 50%, #2f3238 75%);
+
+  background-size: 800px 100%;
+
+  animation: ${shimmer} 1.4s infinite linear;
 `;

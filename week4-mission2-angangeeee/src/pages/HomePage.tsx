@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import * as S from "./LP.style";
 
@@ -12,13 +12,54 @@ import ErrorBox from "../components/lp/ErrorBox";
 export default function LPListPage() {
   const navigate = useNavigate();
   const [sort, setSort] = useState<SortType>("asc");
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["lps", sort],
-    queryFn: () => getLPList(sort),
+    queryFn: ({ pageParam }) =>
+      getLPList({
+        cursor: pageParam,
+        sort,
+        limit: 10,
+      }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? lastPage.nextCursor : undefined,
     staleTime: 1000 * 60,
     gcTime: 1000 * 60 * 5,
   });
+
+  const lps = data?.pages.flatMap((page) => page.data) ?? [];
+
+  useEffect(() => {
+    const target = observerRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      {
+        threshold: 0.5,
+      },
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.unobserve(target);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
     <S.Srapper>
@@ -44,13 +85,15 @@ export default function LPListPage() {
         <ErrorBox onRetry={refetch} />
       ) : (
         <S.Grid>
-          {isLoading ? (
-            <LPSkeleton />
-          ) : (
-            data?.data.map((lp) => <LPCard key={lp.id} lp={lp} />)
-          )}
+          {isLoading && <LPSkeleton count={10} />}
+
+          {!isLoading && lps.map((lp) => <LPCard key={lp.id} lp={lp} />)}
+
+          {isFetchingNextPage && <LPSkeleton count={4} />}
         </S.Grid>
       )}
+
+      <div ref={observerRef} />
 
       <S.FloatingButton type="button" onClick={() => navigate("/lp/create")}>
         +

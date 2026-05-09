@@ -1,9 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import * as S from "./LP.style";
 
-import { getLPDetail } from "../apis/lp";
+import { getLPComments, getLPDetail, type SortType } from "../apis/lp";
 import ErrorBox from "../components/lp/ErrorBox";
 import defaultThumbnail from "../assets/앙.jpg";
 
@@ -16,6 +17,8 @@ interface LoginUser {
 
 export default function LPDetailPage() {
   const { lpId } = useParams<{ lpId: string }>();
+  const [order, setOrder] = useState<SortType>("asc");
+  const commentObserverRef = useRef<HTMLDivElement | null>(null);
 
   const user: LoginUser | null = JSON.parse(
     localStorage.getItem("user") ?? "null",
@@ -33,6 +36,55 @@ export default function LPDetailPage() {
     staleTime: 1000 * 60,
     gcTime: 1000 * 60 * 5,
   });
+
+  const {
+    data: commentData,
+    isLoading: isCommentLoading,
+    isError: isCommentError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchComments,
+  } = useInfiniteQuery({
+    queryKey: ["lpComments", lpId, order],
+    queryFn: ({ pageParam }) =>
+      getLPComments({
+        lpId: lpId as string,
+        cursor: pageParam,
+        sort: order,
+        limit: 10,
+      }),
+    enabled: Boolean(lpId),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNext ? lastPage.nextCursor : undefined,
+    staleTime: 1000 * 60,
+    gcTime: 1000 * 60 * 5,
+  });
+
+  const comments = commentData?.pages.flatMap((page) => page.data) ?? [];
+
+  useEffect(() => {
+    const target = commentObserverRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      {
+        threshold: 0.5,
+      },
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.unobserve(target);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   if (isLoading) return <S.LoadingText>불러오는 중...</S.LoadingText>;
   if (isError || !lp) return <ErrorBox onRetry={refetch} />;
@@ -79,6 +131,69 @@ export default function LPDetailPage() {
           <S.Heart>♥</S.Heart>
           <S.LikeCount>{lp.likes.length}</S.LikeCount>
         </S.LikeArea>
+
+        <S.CommentSection>
+          <S.CommentHeader>
+            <S.CommentTitle>댓글</S.CommentTitle>
+
+            <S.CommentSortArea>
+              <S.CommentSortButton
+                type="button"
+                $isActive={order === "asc"}
+                onClick={() => setOrder("asc")}
+              >
+                오래된순
+              </S.CommentSortButton>
+
+              <S.CommentSortButton
+                type="button"
+                $isActive={order === "desc"}
+                onClick={() => setOrder("desc")}
+              >
+                최신순
+              </S.CommentSortButton>
+            </S.CommentSortArea>
+          </S.CommentHeader>
+
+          <S.CommentForm>
+            <S.CommentInput placeholder="댓글을 입력해주세요." />
+            <S.CommentSubmitButton type="button">작성</S.CommentSubmitButton>
+          </S.CommentForm>
+
+          {isCommentError ? (
+            <ErrorBox onRetry={refetchComments} />
+          ) : (
+            <S.CommentList>
+              {isCommentLoading &&
+                Array.from({ length: 4 }).map((_, index) => (
+                  <S.CommentSkeleton key={`comment-loading-${index}`} />
+                ))}
+
+              {!isCommentLoading &&
+                comments.map((comment) => (
+                  <S.CommentItem key={comment.id}>
+                    <S.CommentMeta>
+                      <S.CommentAuthor>익명 {comment.authorId}</S.CommentAuthor>
+                      <S.CommentDate>
+                        {new Date(comment.createdAt).toLocaleDateString(
+                          "ko-KR",
+                        )}
+                      </S.CommentDate>
+                    </S.CommentMeta>
+
+                    <S.CommentContent>{comment.content}</S.CommentContent>
+                  </S.CommentItem>
+                ))}
+
+              {isFetchingNextPage &&
+                Array.from({ length: 2 }).map((_, index) => (
+                  <S.CommentSkeleton key={`comment-next-${index}`} />
+                ))}
+            </S.CommentList>
+          )}
+
+          <div ref={commentObserverRef} />
+        </S.CommentSection>
       </S.Card>
     </S.Wrapper>
   );
