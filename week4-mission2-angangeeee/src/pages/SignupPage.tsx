@@ -23,15 +23,15 @@ const passwordSchema = z
     message: "비밀번호가 일치하지 않습니다.",
   });
 
-const nicknameSchema = z.object({
-  nickname: z.string().min(1, "닉네임을 입력해주세요."),
+const nameSchema = z.object({
+  name: z.string().min(1, "닉네임을 입력해주세요."),
 });
 
 type EmailForm = z.infer<typeof emailSchema>;
 type PasswordForm = z.infer<typeof passwordSchema>;
-type NicknameForm = z.infer<typeof nicknameSchema>;
+type nameForm = z.infer<typeof nameSchema>;
 
-type Step = "email" | "password" | "nickname";
+type Step = "email" | "password" | "name";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -59,11 +59,11 @@ export default function SignupPage() {
     },
   });
 
-  const nicknameForm = useForm<NicknameForm>({
-    resolver: zodResolver(nicknameSchema),
+  const nameForm = useForm<nameForm>({
+    resolver: zodResolver(nameSchema),
     mode: "onChange",
     defaultValues: {
-      nickname: "",
+      name: "",
     },
   });
 
@@ -74,14 +74,14 @@ export default function SignupPage() {
 
   const handlePasswordNext = (data: PasswordForm) => {
     setSavedPassword(data.password);
-    setStep("nickname");
+    setStep("name");
   };
 
-  const handleSignupComplete = (data: NicknameForm) => {
+  const handleSignupComplete = (data: nameForm) => {
     console.log("회원가입 데이터", {
       email: savedEmail,
       password: savedPassword,
-      nickname: data.nickname,
+      name: data.name,
     });
 
     alert("회원가입 완료!");
@@ -89,7 +89,7 @@ export default function SignupPage() {
   };
 
   const handleBack = () => {
-    if (step === "nickname") {
+    if (step === "name") {
       setStep("password");
       return;
     }
@@ -225,8 +225,8 @@ export default function SignupPage() {
             </S.Form>
           )}
 
-          {step === "nickname" && (
-            <S.Form onSubmit={nicknameForm.handleSubmit(handleSignupComplete)}>
+          {step === "name" && (
+            <S.Form onSubmit={nameForm.handleSubmit(handleSignupComplete)}>
               <S.ProfileImage>
                 <S.ProfileHead />
                 <S.ProfileBody />
@@ -235,19 +235,19 @@ export default function SignupPage() {
               <S.FieldGroup>
                 <S.Input
                   placeholder="닉네임을 입력해주세요!"
-                  $hasError={!!nicknameForm.formState.errors.nickname}
-                  {...nicknameForm.register("nickname")}
+                  $hasError={!!nameForm.formState.errors.name}
+                  {...nameForm.register("name")}
                 />
-                {nicknameForm.formState.errors.nickname && (
+                {nameForm.formState.errors.name && (
                   <S.ErrorMessage>
-                    {nicknameForm.formState.errors.nickname.message}
+                    {nameForm.formState.errors.name.message}
                   </S.ErrorMessage>
                 )}
               </S.FieldGroup>
 
               <S.SubmitButton
                 type="submit"
-                disabled={!nicknameForm.formState.isValid}
+                disabled={!nameForm.formState.isValid}
               >
                 회원가입 완료
               </S.SubmitButton>

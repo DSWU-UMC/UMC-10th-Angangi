@@ -2,12 +2,20 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const BASE_URL = "http://localhost:8000";
 
-interface TokenRefreshResponse {
-  accessToken: string;
-}
-
 interface RetryRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+}
+
+interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  statusCode: number;
+  data: T;
+}
+
+interface TokenRefreshData {
+  accessToken: string;
+  refreshToken?: string;
 }
 
 export const axiosInstance = axios.create({
@@ -30,26 +38,45 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryRequestConfig;
 
+    const requestUrl = originalRequest?.url ?? "";
+
+    const isAuthRequest =
+      requestUrl.includes("/v1/auth/signin") ||
+      requestUrl.includes("/v1/auth/signup") ||
+      requestUrl.includes("/v1/auth/refresh");
+
     if (
       error.response?.status === 401 &&
       originalRequest &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthRequest
     ) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = localStorage.getItem("refreshToken");
 
-        const refreshResponse = await axios.post<TokenRefreshResponse>(
+        if (!refreshToken) {
+          throw new Error("refreshToken이 없습니다.");
+        }
+
+        const refreshResponse = await axios.post<ApiResponse<TokenRefreshData>>(
           `${BASE_URL}/v1/auth/refresh`,
           {
             refreshToken,
           },
         );
 
-        const newAccessToken = refreshResponse.data.accessToken;
+        const newAccessToken = refreshResponse.data.data.accessToken;
 
         localStorage.setItem("accessToken", newAccessToken);
+
+        if (refreshResponse.data.data.refreshToken) {
+          localStorage.setItem(
+            "refreshToken",
+            refreshResponse.data.data.refreshToken,
+          );
+        }
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
@@ -57,6 +84,7 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
 
         window.location.href = "/login";
 

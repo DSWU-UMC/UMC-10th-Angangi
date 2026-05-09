@@ -1,84 +1,52 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { axiosInstance } from "./axiosInstance";
 
-const BASE_URL = "http://localhost:8000";
-
-interface RetryRequestConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
+interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  statusCode: number;
+  data: T;
 }
 
-interface RefreshTokenResponse {
+interface AuthData {
+  id: number;
+  name: string;
   accessToken: string;
+  refreshToken: string;
 }
 
-export const api = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
-});
+export const login = async (email: string, password: string) => {
+  const response = await axiosInstance.post<ApiResponse<AuthData>>(
+    "/v1/auth/signin",
+    {
+      email,
+      password,
+    },
+  );
 
-api.interceptors.request.use((config) => {
-  const accessToken = localStorage.getItem("accessToken");
+  const user = response.data.data;
 
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
+  localStorage.setItem("accessToken", user.accessToken);
+  localStorage.setItem("refreshToken", user.refreshToken);
+  localStorage.setItem("user", JSON.stringify(user));
 
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-
-  async (error: AxiosError) => {
-    const originalRequest = error.config as RetryRequestConfig;
-
-    if (
-      error.response?.status === 401 &&
-      originalRequest &&
-      !originalRequest._retry
-    ) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-
-        const response = await axios.post<RefreshTokenResponse>(
-          `${BASE_URL}/v1/auth/refresh`,
-          {
-            refreshToken,
-          },
-        );
-
-        const newAccessToken = response.data.accessToken;
-
-        localStorage.setItem("accessToken", newAccessToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-
-        window.location.href = "/login";
-
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(error);
-  },
-);
-
-export const login = (email: string, password: string) => {
-  return api.post("/v1/auth/signin", {
-    email,
-    password,
-  });
+  return user;
 };
 
-export const signup = (email: string, password: string) => {
-  return api.post("/v1/auth/signup", {
-    email,
-    password,
-  });
+export const signup = async (name: string, email: string, password: string) => {
+  const response = await axiosInstance.post<ApiResponse<AuthData>>(
+    "/v1/auth/signup",
+    {
+      name,
+      email,
+      password,
+    },
+  );
+
+  const user = response.data.data;
+
+  localStorage.setItem("accessToken", user.accessToken);
+  localStorage.setItem("refreshToken", user.refreshToken);
+  localStorage.setItem("user", JSON.stringify(user));
+
+  return user;
 };
