@@ -201,3 +201,88 @@ export const ConfirmButton = styled.button`
   font-weight: 700;
   cursor: pointer;
 `;
+
+export const WithdrawModalBox = styled.div`
+  width: 360px;
+  padding: 32px 28px;
+
+  border-radius: 16px;
+  background: #2a2d34;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  @media (max-width: 600px) {
+    width: calc(100vw - 40px);
+  }
+`;
+
+export const WithdrawButtonRow = styled.div`
+  width: 100%;
+  margin-top: 8px;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+`;
+
+export const WithdrawCancelButton = styled.button`
+  height: 46px;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+
+  background: transparent;
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+`;
+
+export const WithdrawConfirmButton = styled.button`
+  height: 46px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #ff2ea6;
+  color: white;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    opacity: 0.9;
+  }
+`;
+
+export const WithdrawTitle = styled.h2`
+  margin: 0 0 12px;
+
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+`;
+
+export const WithdrawDescription = styled.p`
+  margin: 0 0 24px;
+
+  color: #b8bcc6;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+`;

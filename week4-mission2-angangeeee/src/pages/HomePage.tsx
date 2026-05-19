@@ -1,17 +1,29 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import * as S from "./LP.style";
 
-import { getLPList, type SortType } from "../apis/lp";
+import { createLP, getLPList, type SortType } from "../apis/lp";
 import LPCard from "../components/lp/LPCard";
 import LPSkeleton from "../components/lp/LPSkeleton";
 import ErrorBox from "../components/lp/ErrorBox";
+import defaultThumbnail from "../assets/앙.jpg";
 
 export default function LPListPage() {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [sort, setSort] = useState<SortType>("asc");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [lpName, setLpName] = useState("");
+  const [lpContent, setLpContent] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+
   const observerRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -21,6 +33,7 @@ export default function LPListPage() {
     refetch,
     fetchNextPage,
     hasNextPage,
+    isFetching,
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["lps", sort],
@@ -37,7 +50,72 @@ export default function LPListPage() {
     gcTime: 1000 * 60 * 5,
   });
 
+  const createLPMutation = useMutation({
+    mutationFn: createLP,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["lps"],
+      });
+
+      closeModal();
+    },
+  });
+
   const lps = data?.pages.flatMap((page) => page.data) ?? [];
+
+  const resetForm = () => {
+    setLpName("");
+    setLpContent("");
+    setTagInput("");
+    setTags([]);
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    resetForm();
+  };
+
+  const handleOverlayClick = () => {
+    closeModal();
+  };
+
+  const handleModalClick = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+  };
+
+  const handleAddTag = () => {
+    const nextTag = tagInput.trim();
+
+    if (!nextTag) return;
+
+    if (tags.includes(nextTag)) {
+      setTagInput("");
+      return;
+    }
+
+    setTags((prev) => [...prev, nextTag]);
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (targetTag: string) => {
+    setTags((prev) => prev.filter((tag) => tag !== targetTag));
+  };
+
+  const handleSubmitLP = () => {
+    if (!lpName.trim() || !lpContent.trim()) return;
+
+    createLPMutation.mutate({
+      title: lpName,
+      content: lpContent,
+      thumbnail: defaultThumbnail,
+      tags,
+      published: true,
+    });
+  };
 
   useEffect(() => {
     const target = observerRef.current;
@@ -45,12 +123,17 @@ export default function LPListPage() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        if (
+          entry.isIntersecting &&
+          hasNextPage &&
+          !isFetching &&
+          !isFetchingNextPage
+        ) {
           fetchNextPage();
         }
       },
       {
-        threshold: 0.5,
+        threshold: 0.1,
       },
     );
 
@@ -59,7 +142,7 @@ export default function LPListPage() {
     return () => {
       observer.unobserve(target);
     };
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage]);
 
   return (
     <S.Srapper>
@@ -95,9 +178,81 @@ export default function LPListPage() {
 
       <div ref={observerRef} />
 
-      <S.FloatingButton type="button" onClick={() => navigate("/lp/create")}>
+      <S.FloatingButton type="button" onClick={openModal}>
         +
       </S.FloatingButton>
+
+      {isModalOpen && (
+        <S.LPModalOverlay onClick={handleOverlayClick}>
+          <S.LPModalBox onClick={handleModalClick}>
+            <S.CloseButton type="button" onClick={closeModal}>
+              ×
+            </S.CloseButton>
+
+            <S.ModalThumbnailLabel>
+              <S.ModalThumbnail src={defaultThumbnail} alt="LP 기본 이미지" />
+            </S.ModalThumbnailLabel>
+
+            <S.ModalInput
+              value={lpName}
+              onChange={(event) => setLpName(event.target.value)}
+              placeholder="LP Name"
+            />
+
+            <S.ModalInput
+              value={lpContent}
+              onChange={(event) => setLpContent(event.target.value)}
+              placeholder="LP Content"
+            />
+
+            <S.TagInputRow>
+              <S.ModalInput
+                value={tagInput}
+                onChange={(event) => setTagInput(event.target.value)}
+                placeholder="LP Tag"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+              />
+
+              <S.TagAddButton type="button" onClick={handleAddTag}>
+                Add
+              </S.TagAddButton>
+            </S.TagInputRow>
+
+            {tags.length > 0 && (
+              <S.TagPreviewArea>
+                {tags.map((tag) => (
+                  <S.TagPreview key={tag}>
+                    #{tag}
+                    <S.TagRemoveButton
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                    >
+                      ×
+                    </S.TagRemoveButton>
+                  </S.TagPreview>
+                ))}
+              </S.TagPreviewArea>
+            )}
+
+            <S.AddLPButton
+              type="button"
+              disabled={
+                !lpName.trim() ||
+                !lpContent.trim() ||
+                createLPMutation.isPending
+              }
+              onClick={handleSubmitLP}
+            >
+              {createLPMutation.isPending ? "Adding..." : "Add LP"}
+            </S.AddLPButton>
+          </S.LPModalBox>
+        </S.LPModalOverlay>
+      )}
     </S.Srapper>
   );
 }

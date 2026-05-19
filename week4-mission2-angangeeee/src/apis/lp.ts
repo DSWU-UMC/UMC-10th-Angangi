@@ -68,6 +68,71 @@ interface LPCommentListResponse {
   data: LPCommentListData;
 }
 
+export interface CreateLPRequest {
+  title: string;
+  content: string;
+  thumbnail: string;
+  tags: string[];
+  published: boolean;
+}
+
+export interface UpdateLPRequest {
+  lpId: string;
+  title: string;
+  content: string;
+  thumbnail: string;
+  tags: string[];
+  published: boolean;
+}
+
+export interface DeleteLPRequest {
+  lpId: string;
+}
+
+interface CreateLPResponse {
+  status: boolean;
+  statusCode: number;
+  message: string;
+  data: LP;
+}
+
+interface DeleteLPResponse {
+  status: boolean;
+  statusCode: number;
+  message: string;
+  data: null;
+}
+
+export interface CreateLPCommentRequest {
+  lpId: string;
+  content: string;
+}
+
+export interface UpdateLPCommentRequest {
+  lpId: string;
+  commentId: number;
+  content: string;
+}
+
+export interface DeleteLPCommentRequest {
+  lpId: string;
+  commentId: number;
+}
+
+interface LPCommentResponse {
+  status: boolean;
+  statusCode: number;
+  message: string;
+  data: LPComment;
+}
+
+interface DeleteLPCommentResponse {
+  status: boolean;
+  statusCode: number;
+  message: string;
+  data: null;
+}
+
 export const getLPList = async ({
   cursor,
   sort,
@@ -114,6 +179,94 @@ export const getLPComments = async ({
         order: sort,
       },
     },
+  );
+
+  return data.data;
+};
+
+export const createLP = async ({
+  title,
+  content,
+  thumbnail,
+  tags,
+  published,
+}: CreateLPRequest): Promise<LP> => {
+  const { data } = await axiosInstance.post<CreateLPResponse>("/v1/lps", {
+    title,
+    content,
+    thumbnail,
+    tags,
+    published,
+  });
+
+  return data.data;
+};
+
+export const updateLP = async ({
+  lpId,
+  title,
+  content,
+  thumbnail,
+  tags,
+  published,
+}: UpdateLPRequest): Promise<LP> => {
+  const { data } = await axiosInstance.patch<LPDetailResponse>(
+    `/v1/lps/${lpId}`,
+    {
+      title,
+      content,
+      thumbnail,
+      tags,
+      published,
+    },
+  );
+
+  return data.data;
+};
+
+export const deleteLP = async ({ lpId }: DeleteLPRequest): Promise<null> => {
+  const { data } = await axiosInstance.delete<DeleteLPResponse>(
+    `/v1/lps/${lpId}`,
+  );
+
+  return data.data;
+};
+
+export const createLPComment = async ({
+  lpId,
+  content,
+}: CreateLPCommentRequest): Promise<LPComment> => {
+  const { data } = await axiosInstance.post<LPCommentResponse>(
+    `/v1/lps/${lpId}/comments`,
+    {
+      content,
+    },
+  );
+
+  return data.data;
+};
+
+export const updateLPComment = async ({
+  lpId,
+  commentId,
+  content,
+}: UpdateLPCommentRequest): Promise<LPComment> => {
+  const { data } = await axiosInstance.patch<LPCommentResponse>(
+    `/v1/lps/${lpId}/comments/${commentId}`,
+    {
+      content,
+    },
+  );
+
+  return data.data;
+};
+
+export const deleteLPComment = async ({
+  lpId,
+  commentId,
+}: DeleteLPCommentRequest): Promise<null> => {
+  const { data } = await axiosInstance.delete<DeleteLPCommentResponse>(
+    `/v1/lps/${lpId}/comments/${commentId}`,
   );
 
   return data.data;
