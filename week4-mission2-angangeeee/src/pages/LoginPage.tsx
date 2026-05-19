@@ -25,10 +25,12 @@ export default function LoginPage() {
     if (!isFormValid) return;
 
     try {
-      const res = await login(email, password);
+      const user = await login(email, password);
 
-      localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("refreshToken", res.data.refreshToken);
+      localStorage.setItem("accessToken", user.accessToken);
+      localStorage.setItem("refreshToken", user.refreshToken);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("name", user.name);
 
       navigate("/home");
     } catch (error) {
