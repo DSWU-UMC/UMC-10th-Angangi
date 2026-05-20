@@ -62,7 +62,7 @@ export default function MyPage() {
     <>
       <S.Layout>
         <S.Container>
-          <S.Title>마이페이지</S.Title>
+          <S.Title>마이페이지 닉네임 변경</S.Title>
 
           <S.ProfileCard>
             <S.ProfileImage
