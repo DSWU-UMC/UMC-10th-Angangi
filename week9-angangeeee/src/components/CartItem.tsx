@@ -1,14 +1,14 @@
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../store/store";
 import type { CartItemType } from "../constants/cartItems";
-import { decrease, increase, removeItem } from "../store/cartSlice";
+import { useCartStore } from "../store/useCartStore";
 
 type CartItemProps = {
   item: CartItemType;
 };
 
 export default function CartItem({ item }: CartItemProps) {
-  const dispatch = useDispatch<AppDispatch>();
+  const increase = useCartStore((state) => state.increase);
+  const decrease = useCartStore((state) => state.decrease);
+  const removeItem = useCartStore((state) => state.removeItem);
 
   return (
     <article className="mx-auto flex w-[900px] items-center justify-between border-b border-gray-200 py-5">
@@ -20,13 +20,13 @@ export default function CartItem({ item }: CartItemProps) {
         />
 
         <div>
-          <h2 className="text-[25px] font-bold">{item.title}</h2>
+          <h2 className="text-[25px] font-bold leading-tight">{item.title}</h2>
           <p className="text-lg text-slate-600">{item.singer}</p>
           <p className="text-xl font-bold text-slate-800">${item.price}</p>
 
           <button
             type="button"
-            onClick={() => dispatch(removeItem(item.id))}
+            onClick={() => removeItem(item.id)}
             className="mt-1 text-sm text-slate-400 hover:text-red-500"
           >
             remove
@@ -37,7 +37,7 @@ export default function CartItem({ item }: CartItemProps) {
       <div className="flex items-center">
         <button
           type="button"
-          onClick={() => dispatch(decrease(item.id))}
+          onClick={() => decrease(item.id)}
           className="h-10 w-10 rounded-l bg-slate-300 text-xl"
         >
           -
@@ -49,7 +49,7 @@ export default function CartItem({ item }: CartItemProps) {
 
         <button
           type="button"
-          onClick={() => dispatch(increase(item.id))}
+          onClick={() => increase(item.id)}
           className="h-10 w-10 rounded-r bg-slate-300 text-xl"
         >
           +

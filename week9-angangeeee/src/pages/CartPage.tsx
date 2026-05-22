@@ -1,18 +1,17 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 
 import CartItem from "../components/CartItem";
-import { calculateTotals } from "../store/cartSlice";
-import { openModal } from "../store/modalSlice";
-import type { AppDispatch, RootState } from "../store/store";
+import { useCartStore } from "../store/useCartStore";
 
 export default function CartPage() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { cartItems, total } = useSelector((state: RootState) => state.cart);
+  const cartItems = useCartStore((state) => state.cartItems);
+  const total = useCartStore((state) => state.total);
+  const calculateTotals = useCartStore((state) => state.calculateTotals);
+  const openModal = useCartStore((state) => state.openModal);
 
   useEffect(() => {
-    dispatch(calculateTotals());
-  }, [cartItems, dispatch]);
+    calculateTotals();
+  }, [cartItems, calculateTotals]);
 
   if (cartItems.length === 0) {
     return (
@@ -39,7 +38,7 @@ export default function CartPage() {
         <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={() => dispatch(openModal())}
+            onClick={openModal}
             className="rounded border border-black px-8 py-5 hover:bg-black hover:text-white"
           >
             전체 삭제
