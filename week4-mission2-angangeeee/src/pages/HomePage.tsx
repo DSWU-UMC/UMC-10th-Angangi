@@ -14,6 +14,7 @@ import LPSkeleton from "../components/lp/LPSkeleton";
 import ErrorBox from "../components/lp/ErrorBox";
 import defaultThumbnail from "../assets/앙.jpg";
 import useDebounce from "../hooks/useDebounce";
+import useThrottle from "../hooks/useThrottle";
 
 export default function LPListPage() {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export default function LPListPage() {
   const [sort, setSort] = useState<SortType>("asc");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [shouldFetchNextPage, setShouldFetchNextPage] = useState(false);
 
   const [lpName, setLpName] = useState("");
   const [lpContent, setLpContent] = useState("");
@@ -33,6 +35,8 @@ export default function LPListPage() {
 
   const debouncedSearch = useDebounce(search, 300);
   const trimmedSearch = debouncedSearch.trim();
+
+  const throttledShouldFetchNextPage = useThrottle(shouldFetchNextPage, 1000);
 
   const {
     data,
@@ -142,14 +146,7 @@ export default function LPListPage() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          hasNextPage &&
-          !isFetching &&
-          !isFetchingNextPage
-        ) {
-          fetchNextPage();
-        }
+        setShouldFetchNextPage(entry.isIntersecting);
       },
       {
         threshold: 0.1,
@@ -161,7 +158,25 @@ export default function LPListPage() {
     return () => {
       observer.unobserve(target);
     };
-  }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage]);
+  }, []);
+
+  useEffect(() => {
+    if (
+      throttledShouldFetchNextPage &&
+      hasNextPage &&
+      !isFetching &&
+      !isFetchingNextPage
+    ) {
+      console.log("throttle 적용: 다음 LP 목록 요청");
+      fetchNextPage();
+    }
+  }, [
+    throttledShouldFetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    fetchNextPage,
+  ]);
 
   return (
     <S.Srapper>
@@ -221,7 +236,7 @@ export default function LPListPage() {
         </S.Grid>
       )}
 
-      <div ref={observerRef} />
+      <div ref={observerRef} style={{ height: "20px" }} />
 
       <S.FloatingButton type="button" onClick={openModal}>
         +
