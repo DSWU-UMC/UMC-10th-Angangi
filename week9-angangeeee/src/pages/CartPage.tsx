@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import CartItem from "../components/CartItem";
-import { calculateTotals, clearCart } from "../store/cartSlice";
+import { calculateTotals } from "../store/cartSlice";
+import { openModal } from "../store/modalSlice";
 import type { AppDispatch, RootState } from "../store/store";
 
 export default function CartPage() {
   const dispatch = useDispatch<AppDispatch>();
-
   const { cartItems, total } = useSelector((state: RootState) => state.cart);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function CartPage() {
         <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={() => dispatch(clearCart())}
+            onClick={() => dispatch(openModal())}
             className="rounded border border-black px-8 py-5 hover:bg-black hover:text-white"
           >
             전체 삭제
