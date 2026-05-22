@@ -1,4 +1,5 @@
 import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   useInfiniteQuery,
   useMutation,
@@ -12,19 +13,26 @@ import LPCard from "../components/lp/LPCard";
 import LPSkeleton from "../components/lp/LPSkeleton";
 import ErrorBox from "../components/lp/ErrorBox";
 import defaultThumbnail from "../assets/앙.jpg";
+import useDebounce from "../hooks/useDebounce";
 
 export default function LPListPage() {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
 
   const [sort, setSort] = useState<SortType>("asc");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [lpName, setLpName] = useState("");
   const [lpContent, setLpContent] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
 
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const observerRef = useRef<HTMLDivElement | null>(null);
+
+  const debouncedSearch = useDebounce(search, 300);
+  const trimmedSearch = debouncedSearch.trim();
 
   const {
     data,
@@ -36,12 +44,13 @@ export default function LPListPage() {
     isFetching,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["lps", sort],
+    queryKey: ["lps", sort, trimmedSearch],
     queryFn: ({ pageParam }) =>
       getLPList({
         cursor: pageParam,
         sort,
         limit: 10,
+        search: trimmedSearch || undefined,
       }),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (lastPage) =>
@@ -118,6 +127,16 @@ export default function LPListPage() {
   };
 
   useEffect(() => {
+    const focus = searchParams.get("focus");
+
+    if (focus === "search") {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const target = observerRef.current;
     if (!target) return;
 
@@ -146,6 +165,32 @@ export default function LPListPage() {
 
   return (
     <S.Srapper>
+      <div
+        style={{
+          width: "100%",
+          marginBottom: "20px",
+        }}
+      >
+        <input
+          ref={searchInputRef}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="찾고 싶은 LP를 검색해보세요"
+          style={{
+            width: "100%",
+            height: "44px",
+            padding: "0 14px",
+            borderRadius: "8px",
+            border: "1px solid #555",
+            backgroundColor: "#111",
+            color: "#fff",
+            fontSize: "14px",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
       <S.SortArea>
         <S.SortButton
           type="button"

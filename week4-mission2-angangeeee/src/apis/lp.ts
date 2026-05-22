@@ -137,16 +137,19 @@ export const getLPList = async ({
   cursor,
   sort,
   limit = 10,
+  search,
 }: {
   cursor?: number;
   sort: SortType;
   limit?: number;
+  search?: string;
 }): Promise<LPListData> => {
   const { data } = await axiosInstance.get<LPListResponse>("/v1/lps", {
     params: {
       cursor,
       limit,
       order: sort,
+      search,
     },
   });
 

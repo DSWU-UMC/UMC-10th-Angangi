@@ -47,7 +47,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <S.Sidebar $isOpen={isOpen}>
         <S.SidebarMenu>
-          <S.SidebarItem type="button" onClick={() => handleMove("/home")}>
+          <S.SidebarItem
+            type="button"
+            onClick={() => handleMove("/home?focus=search")}
+          >
             찾기
           </S.SidebarItem>
 
